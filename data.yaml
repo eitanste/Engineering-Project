@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['Hammer', 'Knife', 'Person', 'scissors']
+
+roboflow:
+  workspace: eitan
+  project: knives-and-scissors-training
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/eitan/knives-and-scissors-training/dataset/2
