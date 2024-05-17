@@ -84,7 +84,7 @@ def alart_push_notification():
     res = send_message("ALART!!!! Danger was detected!")
     print(f"The massage got {res}")
     #     TODO: take photo from the stream and delete the local file
-    photo_path = r"C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\yolov5_deploy\child_in_danger_1.jpg"
+    photo_path = "child_in_danger_1.jpg"
     res = send_photo(photo_path)
     print(f"The massage got {res}")
 
