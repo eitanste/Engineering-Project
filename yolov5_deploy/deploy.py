@@ -9,6 +9,7 @@ import time
 import math
 import BlynkLib
 from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
+from yolov5_deploy.telegram_bot import alart_push_notification
 
 # Global variables for cooldown
 notification_sent = False
@@ -84,7 +85,7 @@ def plot_boxes(results, frame, blynk, classes):
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
         if not notification_sent:
-
+            alart_push_notification()
             notification_sent = True
             cooldown_timer = time.time()
     else:
