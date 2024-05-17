@@ -3,12 +3,66 @@ CODER ZERO
 connect with me at: https://www.youtube.com/channel/UCKipQAvBc7CWZaPib4y8Ajg
 '''
 ### importing required libraries
+import os
+import subprocess
 import torch
 import cv2
 import time
 import math
 import BlynkLib
-from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
+import ffmpeg
+import numpy as np
+from flask import Flask, Response, jsonify, request
+from flask_cors import CORS
+
+
+#from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
+app = Flask(__name__)
+CORS(app)
+
+ELEMENTS_CONFIG = []
+
+PERSON = 'person'
+dangerous_labels = ['vase', 'banana']
+
+MIN_DIST_THRESHOLD = 100
+
+# colors for bounding boxes
+GREEN_COLOR = (0, 255, 0)
+RED_COLOR = (0, 0, 255)
+BLUE_COLOR = (255, 0, 0)
+
+# Assuming you have defined width, height, and fps somewhere
+# width, height, fps = ...
+
+# Define the input parameters
+input_params = {
+    'format': 'rawvideo',
+    'pix_fmt': 'bgr24',
+    's': '{}x{}'.format(1024, 576)
+}
+
+# Define the output parameters
+output_params = {
+    'format': 'hls',
+    'start_number': 0,
+    'hls_time': 1,
+    'hls_list_size': 0,
+    'hls_flags': 'delete_segments'
+}
+
+# Create the ffmpeg input
+input = ffmpeg.input('pipe:', **input_params)
+
+# Create the ffmpeg output
+output = ffmpeg.output(input, '/Users/sagi/git/toddler_alert/public/video/output.m3u8', **output_params)
+
+process = (
+    ffmpeg
+    .input('pipe:', format='rawvideo', pix_fmt='bgr24', s='{}x{}'.format(1024, 576))
+    .output('/Users/sagi/git/toddler_alert/public/video/output.m3u8', format='hls', start_number=0, hls_time=1, hls_list_size=0, hls_flags='delete_segments')
+    .run_async(pipe_stdin=True, pipe_stdout=True, pipe_stderr=True)
+)
 
 
 ### -------------------------------------- function to run detection ---------------------------------------------------------
@@ -121,6 +175,7 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
+
 def main(img_path=None, vid_path=None, vid_out=None):
     blynk = init_blynk()
 
@@ -170,10 +225,11 @@ def main(img_path=None, vid_path=None, vid_out=None):
             codec = cv2.VideoWriter_fourcc(*'mp4v')  ##(*'XVID')
             out = cv2.VideoWriter(vid_out, codec, fps, (width, height))
 
+            
         # assert cap.isOpened()
         frame_no = 1
 
-        cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
+        #cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
         while True:
             # start_time = time.time()
             ret, frame = cap.read()
@@ -185,6 +241,14 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 frame = plot_boxes(results, frame, blynk, classes=classes)
 
+
+                ret, buffer = cv2.imencode('.jpg', frame)
+                frame = buffer.tobytes()
+
+                # Use a yield statement to return the frame in a streaming response
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                continue
                 cv2.imshow("vid_out", frame)
                 if vid_out:
                     # print(f"[INFO] Saving output video. . . ")
@@ -207,9 +271,37 @@ def init_blynk():
     blynk = BlynkLib.Blynk(BLYNK_AUTH_TOKEN)
     return blynk
 
+@app.route('/video_feed')
+def video_feed():
+    # Return the streaming response
+    return Response(main(vid_path=0, vid_out="default_out.mp4"),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
-if __name__ == "main":
-    main(vid_path=0, vid_out="default_out.mp4")
+@app.route('/elements', methods=['POST'])
+def elements():
+    # Return the streaming response
+    ELEMENTS_CONFIG = request.json.get('elements')
+    return jsonify({'OK': True})
+
+@app.route('/')
+def index():
+    # HTML to display the video stream
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Video Streaming</title>
+    </head>
+    <body>
+        <h1>Video Streaming</h1>
+        <img src="/video_feed" width="1080" height="720" />
+    </body>
+    </html>
+    """
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5001)
+    #main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
          # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
