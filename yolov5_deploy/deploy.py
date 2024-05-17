@@ -10,6 +10,11 @@ import math
 import BlynkLib
 from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
 
+# Global variables for cooldown
+notification_sent = False
+cooldown_timer = None
+cooldown_duration = 5  # Cooldown duration in seconds
+
 
 ### -------------------------------------- function to run detection ---------------------------------------------------------
 def detectx(frame, model):
@@ -33,6 +38,7 @@ def plot_boxes(results, frame, blynk, classes):
     --> results: contains labels and coordinates predicted by model on the given frame
     --> classes: contains the strting labels
     """
+    global notification_sent, cooldown_timer
     labels, cord = results
     n = len(labels)
     x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -74,11 +80,20 @@ def plot_boxes(results, frame, blynk, classes):
         # print('y dist is ' + str(
         #     (hazards['person'][1] / 2) - hazards[lable][1] / 2))
         #     pass
+
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
-        # blynk.virtual_write(0, 1)
+        if not notification_sent:
+
+            notification_sent = True
+            cooldown_timer = time.time()
     else:
         print('NO DANGER DETECTED')
+
+    if notification_sent:
+        elapsed_time = time.time() - cooldown_timer
+        if elapsed_time >= cooldown_duration:
+            notification_sent = False
 
     return frame
 
@@ -156,7 +171,7 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 break
 
     elif vid_path != None:
-        # print(f"[INFO] Working with video: {vid_path}")
+        print(f"[INFO] Working with video: {vid_path}")
 
         ## reading the video
         cap = cv2.VideoCapture(vid_path)
@@ -172,6 +187,9 @@ def main(img_path=None, vid_path=None, vid_out=None):
 
         # assert cap.isOpened()
         frame_no = 1
+        notification_sent = False
+        cooldown_timer = None
+        cooldown_duration = 5
 
         cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
         while True:
@@ -208,8 +226,7 @@ def init_blynk():
     return blynk
 
 
-if __name__ == "main":
-    main(vid_path=0, vid_out="default_out.mp4")
+main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
          # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
