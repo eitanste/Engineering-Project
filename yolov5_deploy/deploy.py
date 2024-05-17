@@ -10,7 +10,6 @@ import cv2
 import time
 import math
 import BlynkLib
-import ffmpeg
 import numpy as np
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
@@ -31,38 +30,6 @@ MIN_DIST_THRESHOLD = 100
 GREEN_COLOR = (0, 255, 0)
 RED_COLOR = (0, 0, 255)
 BLUE_COLOR = (255, 0, 0)
-
-# Assuming you have defined width, height, and fps somewhere
-# width, height, fps = ...
-
-# Define the input parameters
-input_params = {
-    'format': 'rawvideo',
-    'pix_fmt': 'bgr24',
-    's': '{}x{}'.format(1024, 576)
-}
-
-# Define the output parameters
-output_params = {
-    'format': 'hls',
-    'start_number': 0,
-    'hls_time': 1,
-    'hls_list_size': 0,
-    'hls_flags': 'delete_segments'
-}
-
-# Create the ffmpeg input
-input = ffmpeg.input('pipe:', **input_params)
-
-# Create the ffmpeg output
-output = ffmpeg.output(input, '/Users/sagi/git/toddler_alert/public/video/output.m3u8', **output_params)
-
-process = (
-    ffmpeg
-    .input('pipe:', format='rawvideo', pix_fmt='bgr24', s='{}x{}'.format(1024, 576))
-    .output('/Users/sagi/git/toddler_alert/public/video/output.m3u8', format='hls', start_number=0, hls_time=1, hls_list_size=0, hls_flags='delete_segments')
-    .run_async(pipe_stdin=True, pipe_stdout=True, pipe_stderr=True)
-)
 
 
 ### -------------------------------------- function to run detection ---------------------------------------------------------

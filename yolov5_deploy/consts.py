@@ -1,5 +1,5 @@
 PERSON = 'person'
-dangerous_labels = ['vase', 'banana']
+dangerous_labels = ['bottle', 'vase', 'banana']
 
 MIN_DIST_THRESHOLD = 100
 
