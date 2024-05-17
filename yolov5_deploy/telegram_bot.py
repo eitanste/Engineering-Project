@@ -59,6 +59,8 @@
 
 import requests
 
+GROUP_CHAT_ID = -1002109878950
+
 def send_message(message: str) -> int:
     payload = {"chat_id": GROUP_CHAT_ID, "text": message}
     req = requests.post(NOTIFICATION_URL, data=payload)
