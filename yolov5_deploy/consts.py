@@ -1,5 +1,5 @@
 PERSON = 'person'
-dangerous_labels = ['vase', 'banana']
+dangerous_labels = ['bottle', 'banana']
 
 MIN_DIST_THRESHOLD = 100
 BOT_STR_TOKEN = "6837047207:AAEgO2dR4sRu-vyqFhdgcTlOb0blIEdtN5M"
