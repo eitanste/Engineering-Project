@@ -7,7 +7,6 @@ import torch
 import cv2
 import time
 import math
-import BlynkLib
 from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
 from yolov5_deploy.telegram_bot import alart_push_notification
 
@@ -33,7 +32,7 @@ def detectx(frame, model):
 
 
 ### ------------------------------------ to plot the BBox and results --------------------------------------------------------
-def plot_boxes(results, frame, blynk, classes):
+def plot_boxes(results, frame, classes):
     """
     --> This function takes results, frame and classes
     --> results: contains labels and coordinates predicted by model on the given frame
@@ -47,8 +46,6 @@ def plot_boxes(results, frame, blynk, classes):
 
     # print(f"[INFO] Total {n} detections. . . ")
     # print(f"[INFO] Looping through all detections. . . ")
-
-    # blynk.run()
 
     ### looping through the detections
     for i in range(n):
@@ -138,11 +135,10 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
 def main(img_path=None, vid_path=None, vid_out=None):
-    blynk = init_blynk()
 
     print(f"[INFO] Loading model... ")
     ## loading the custom trained model
-    model = torch.hub.load('ultralytics/yolov5', 'yolov5m6')
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5s6')
     # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
     # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
 
@@ -156,7 +152,7 @@ def main(img_path=None, vid_path=None, vid_out=None):
         results = detectx(frame, model=model)  ### DETECTION HAPPENING HERE
 
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        frame = plot_boxes(results, frame, blynk, classes=classes)
+        frame = plot_boxes(results, frame, classes=classes)
 
         cv2.namedWindow("img_only", cv2.WINDOW_NORMAL)  ## creating a free windown to show the result
 
@@ -202,7 +198,7 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = detectx(frame, model=model)
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                frame = plot_boxes(results, frame, blynk, classes=classes)
+                frame = plot_boxes(results, frame, classes=classes)
 
                 cv2.imshow("vid_out", frame)
                 if vid_out:
@@ -219,12 +215,6 @@ def main(img_path=None, vid_path=None, vid_out=None):
 
         ## closing all windows
         cv2.destroyAllWindows()
-
-
-def init_blynk():
-    BLYNK_AUTH_TOKEN = "lL47FejJojAm1ZfvU-k6r7WZ64wVebJC"
-    blynk = BlynkLib.Blynk(BLYNK_AUTH_TOKEN)
-    return blynk
 
 
 main(vid_path=0, vid_out="default_out.mp4")

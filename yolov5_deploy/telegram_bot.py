@@ -61,7 +61,8 @@ import requests
 
 TOKEN = '6837047207:AAEgO2dR4sRu-vyqFhdgcTlOb0blIEdtN5M'
 # CHAT_ID = '@ToddlerGuardbot'
-GROUP_CHAT_ID = -1002109878950
+# GROUP_CHAT_ID = -1002109878950
+GROUP_CHAT_ID = -4186252810
 FFMPEG_COMMAND = 'ffmpeg -i rtsp://your_camera_stream -f mpegts -c:v mpeg1video -b:v 800k -r 30 -s 640x480 -bf 0 http://your_streaming_server:port'
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 SEND_MESSAGE = "/sendMessage"
