@@ -10,6 +10,9 @@ import math
 from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
 from yolov5_deploy.telegram_bot import alart_push_notification
 
+
+from ultralytics import YOLO
+
 # Global variables for cooldown
 notification_sent = False
 cooldown_timer = None
@@ -43,9 +46,6 @@ def plot_boxes(results, frame, classes):
     n = len(labels)
     x_shape, y_shape = frame.shape[1], frame.shape[0]
     hazards = dict()
-
-    # print(f"[INFO] Total {n} detections. . . ")
-    # print(f"[INFO] Looping through all detections. . . ")
 
     ### looping through the detections
     for i in range(n):
@@ -217,9 +217,9 @@ def main(img_path=None, vid_path=None, vid_out=None):
         cv2.destroyAllWindows()
 
 
-main(vid_path=0, vid_out="default_out.mp4")
+if __name__ == "__main__":
+    # main(vid_path=0, vid_out="default_out.mp4")
 
-    # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
-         # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
-
-    # main(img_path="crowd_mask181.jpg") ## for image
+        # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
+             # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
+    main(img_path=r"C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\Evaluation\Child\images\13.jpeg") ## for image
