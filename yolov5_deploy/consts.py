@@ -13,6 +13,7 @@ dangerous_labels = coco_dangerous_labels
 MIN_DIST_THRESHOLD = 100
 BOT_STR_TOKEN = "6837047207:AAEgO2dR4sRu-vyqFhdgcTlOb0blIEdtN5M"
 BOT_ID = '@ToddlerGuardbot'
+FRAME_SAMPLE_PARAMETER = 5
 
 # colors for bounding boxes
 GREEN_COLOR = (0, 255, 0)
