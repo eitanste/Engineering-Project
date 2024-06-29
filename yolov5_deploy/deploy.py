@@ -16,13 +16,14 @@ from flask_cors import CORS
 
 
 #from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
+context = (r"C:\Users\eitan\OneDrive\Desktop\fullchain.pem", r"C:\Users\eitan\OneDrive\Desktop\privkey.pem")
 app = Flask(__name__)
 CORS(app)
 
 ELEMENTS_CONFIG = []
 
 PERSON = 'person'
-dangerous_labels = ['vase', 'banana']
+# dangerous_labels = ['vase', 'banana']
 
 MIN_DIST_THRESHOLD = 100
 
@@ -241,8 +242,10 @@ def init_blynk():
 @app.route('/video_feed')
 def video_feed():
     # Return the streaming response
-    return Response(main(vid_path=0, vid_out="default_out.mp4"),
+    return Response(main(vid_path=2, vid_out="default_out.mp4"),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+    # return Response(main(vid_path=3, vid_out="default_out.mp4"),
+    #                 mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/elements', methods=['POST'])
 def elements():
@@ -267,7 +270,8 @@ def index():
     """
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
+    # app.run(host='0.0.0.0', port=5001) # For Testing
     #main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
