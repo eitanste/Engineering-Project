@@ -7,11 +7,10 @@ import torch
 import cv2
 import time
 import math
-from yolov5_deploy.consts import PERSON, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
-from yolov5_deploy.telegram_bot import alart_push_notification
-
-
-from ultralytics import YOLO
+from consts import PERSON, FRAME_SAMPLE_PARAMETER, MIN_DIST_THRESHOLD, dangerous_labels, GREEN_COLOR, RED_COLOR
+from midas_depth_map import get_depth_at_coordinates
+# from git telegram_bot import alart_push_notification
+from ultralytics import YOLO  # Ensure you have ultralytics package installed
 
 # Global variables for cooldown
 notification_sent = False
@@ -35,7 +34,7 @@ def detectx(frame, model):
 
 
 ### ------------------------------------ to plot the BBox and results --------------------------------------------------------
-def plot_boxes(results, frame, classes):
+def plot_boxes(results, frame, frame_counter, msg, midas, classes):
     """
     --> This function takes results, frame and classes
     --> results: contains labels and coordinates predicted by model on the given frame
@@ -47,8 +46,12 @@ def plot_boxes(results, frame, classes):
     x_shape, y_shape = frame.shape[1], frame.shape[0]
     hazards = dict()
 
+    # print(f"[INFO] Total {n} detections. . . ")
+    # print(f"[INFO] Looping through all detections. . . ")
+
     ### looping through the detections
     for i in range(n):
+        print("next")
         row = cord[i]
         if row[4] >= 0.33:  ### threshold value for detection. We are discarding everything below this value
             # print(f"[INFO] Extracting BBox coordinates. . . ")
@@ -72,35 +75,37 @@ def plot_boxes(results, frame, classes):
             ## print(row[4], type(row[4]),int(row[4]), len(text_d))
 
             hazards[text_d] = [x1, y1, x2, y2]
-        # if ('person' in hazards.keys() and lable in hazards.keys()):
-        # print('x dist is ' + str(
-        #     ('person' in hazards.keys() and lable in hazards.keys()) and (hazards['person'][0] / 2) - hazards[lable][0]/2))
-        # print('y dist is ' + str(
-        #     (hazards['person'][1] / 2) - hazards[lable][1] / 2))
-        #     pass
+        if frame_counter == FRAME_SAMPLE_PARAMETER:
+            is_dangerous_labels = check_dangerous_labels(hazards, frame, msg, midas)
+            print(is_dangerous_labels)
+            if is_dangerous_labels[0]:
+                message = is_dangerous_labels[1]
+                print(message)
+                if not notification_sent:
+                    # alart_push_notification()
+                    notification_sent = True
+                    cooldown_timer = time.time()
+                    break
 
-    if check_dangerous_labels(hazards):
-        print('WARNING!!!! DANGER DETECTED')
-        if not notification_sent:
-            alart_push_notification()
-            notification_sent = True
-            cooldown_timer = time.time()
-    else:
-        print('NO DANGER DETECTED')
+            else:
+                print('NO DANGER DETECTED')
 
-    if notification_sent:
-        elapsed_time = time.time() - cooldown_timer
-        if elapsed_time >= cooldown_duration:
-            notification_sent = False
+            if notification_sent:
+                elapsed_time = time.time() - cooldown_timer
+                if elapsed_time >= cooldown_duration:
+                    notification_sent = False
+
 
     return frame
 
 
-def check_dangerous_labels(hazards):
+def check_dangerous_labels(hazards, frame, msg, midas):
     for label in dangerous_labels:
         if check_proximity_in_2D(hazards, label):
-            return True
-    return False
+            if check_proximity_in_2D(hazards, label) and check_proximity_in_3D(hazards, label, frame, midas):
+                msg = "WARNING!!!! DANGER DETECTED"
+                return True , msg
+    return False, msg
 
 
 def check_proximity_in_2D(hazards, label):
@@ -109,8 +114,45 @@ def check_proximity_in_2D(hazards, label):
     return is_person_and_hazard_in_one_frame(hazards, label) and measure_distance_in_2D(hazards, label)
 
 
+def check_proximity_in_3D(hazards, label, frame, midas):
+    # if is_person_and_hazard_in_one_frame(hazards, label):
+    #     print("Distance btw obj is " + str((hazards[PERSON][0] / 2) - hazards[label][0] / 2))
+    return is_person_and_hazard_in_one_frame(hazards, label) and measure_distance_in_3D(hazards, label, frame, midas)
+
+
 def is_intersecting(hazards, label):
     return is_Y_intersect(hazards, label) and is_X_intersect(hazards, label)
+
+
+def get_center_x_of_bbox(bbox):
+    return math.ceil(abs((bbox[0] + bbox[2]) / 2))
+
+
+def get_center_y_of_bbox(bbox):
+    return math.ceil(abs((bbox[1] + bbox[3]) / 2))
+
+
+def get_center_of_bbox(bbox):
+    return [get_center_x_of_bbox(bbox), get_center_y_of_bbox(bbox)]
+
+
+def is_intersecting_3D(hazards, label, frame, midas):
+    hazard_bbox_center = get_center_of_bbox(hazards[label])
+    person_bbox_center = get_center_of_bbox(hazards[PERSON])
+
+    hazard_depth = get_depth_at_coordinates(hazard_bbox_center[0], hazard_bbox_center[1], frame, midas)
+    person_depth = get_depth_at_coordinates(person_bbox_center[0], person_bbox_center[1], frame, midas)
+    depth_diff = abs(hazard_depth - person_depth)
+    print(
+        f"Depth value hazard ({hazard_bbox_center[0]}, {hazard_bbox_center[1]}): {hazard_depth} \n "
+        f"Depth value person ({person_bbox_center[0]}, {person_bbox_center[1]}): {person_depth} \n "
+        f"depth_dist: {depth_diff}")
+
+    if depth_diff > 1:
+        return False
+    else:
+        return True
+
 
 
 def is_X_intersect(hazards, label):
@@ -120,11 +162,16 @@ def is_X_intersect(hazards, label):
 
 def is_Y_intersect(hazards, label):
     return ((hazards[label][1] >= hazards[PERSON][1] and hazards[label][1] <= hazards[PERSON][3])
-     or (hazards[label][3] >= hazards[PERSON][1] and hazards[label][3] <= hazards[PERSON][3]))
+            or (hazards[label][3] >= hazards[PERSON][1] and hazards[label][3] <= hazards[PERSON][3]))
 
 
 def measure_distance_in_2D(hazards, label):
     intersection = is_intersecting(hazards, label)
+    return intersection
+
+
+def measure_distance_in_3D(hazards, label, frame, midas):
+    intersection = is_intersecting_3D(hazards, label, frame, midas)
     return intersection
 
 
@@ -135,14 +182,16 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
 def main(img_path=None, vid_path=None, vid_out=None):
-
     print(f"[INFO] Loading model... ")
     ## loading the custom trained model
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s6')
+    depth_model_type = "DPT_Hybrid"
+    midas = torch.hub.load("intel-isl/MiDaS", depth_model_type)
     # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
     # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
 
     classes = model.names  ### class names in string format
+    msg = ""
 
     if img_path != None:
         print(f"[INFO] Working with image: {img_path}")
@@ -152,9 +201,10 @@ def main(img_path=None, vid_path=None, vid_out=None):
         results = detectx(frame, model=model)  ### DETECTION HAPPENING HERE
 
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        frame = plot_boxes(results, frame, classes=classes)
+        frame = plot_boxes(results, frame, midas, classes=classes)
 
         cv2.namedWindow("img_only", cv2.WINDOW_NORMAL)  ## creating a free windown to show the result
+        cv2.imwrite("final_output.jpg", frame)
 
         while True:
             # frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
@@ -187,18 +237,23 @@ def main(img_path=None, vid_path=None, vid_out=None):
         notification_sent = False
         cooldown_timer = None
         cooldown_duration = 5
+        frame_counter = 0
+        msg = ""
 
         cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
         while True:
             # start_time = time.time()
             ret, frame = cap.read()
+            frame_counter+=1
             if ret:
                 # print(f"[INFO] Working with frame {frame_no} ")
 
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = detectx(frame, model=model)
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                frame = plot_boxes(results, frame, classes=classes)
+                frame = plot_boxes(results, frame, frame_counter, msg, midas, classes=classes)
+                print(f"do i get here where there is still a danger")
+
 
                 cv2.imshow("vid_out", frame)
                 if vid_out:
@@ -208,6 +263,10 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 if cv2.waitKey(5) & 0xFF == 27:
                     break
                 frame_no += 1
+                print(frame_counter)
+
+                if frame_counter == 5:
+                    frame_counter = 0
 
         # print(f"[INFO] Clening up. . . ")
         ### releaseing the writer
@@ -217,9 +276,9 @@ def main(img_path=None, vid_path=None, vid_out=None):
         cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    # main(vid_path=0, vid_out="default_out.mp4")
 
-        # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
-             # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
-    main(img_path=r"C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\Evaluation\Child\images\13.jpeg") ## for image
+# main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
+# , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
+
+# main(img_path="/Users/tanyafainstein/Desktop/Degree/4_YEAR/Project/project/project_yolov5/Engineering-Project/yolov5_deploy/÷Kitchen-Safety-Toddler-with-chef-knife-on-floor-scaled.jpeg") ## for image
+
