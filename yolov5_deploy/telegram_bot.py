@@ -3,7 +3,7 @@
 # import requests
 # import subprocess
 # from flask import Flask, request
-
+import numpy
 # # Replace these with your own values
 # TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
 # CHAT_ID = 'YOUR_CHAT_ID'
@@ -74,23 +74,37 @@ def send_message(message: str) -> int:
     return req.status_code
 
 
-def send_photo(photo_url: str) -> int:
-    with open(photo_url, 'rb') as file:
-        files = {'photo': file}
-        data = {'chat_id': GROUP_CHAT_ID}
-        res = requests.post(BASE_URL + SEND_PHOTO, data=data, files=files)
-        return res.status_code
+def send_photo(frame: numpy.ndarray) -> int:
 
-def alart_push_notification():
+    file_obj = get_image_from_np(frame)
+
+    files = {'photo': file_obj}
+    data = {'chat_id': GROUP_CHAT_ID}
+    res = requests.post(BASE_URL + SEND_PHOTO, data=data, files=files)
+
+    return res.status_code
+
+
+def get_image_from_np(frame):
+    from PIL import Image
+    from io import BytesIO
+    import cv2
+    image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    file_obj = BytesIO()
+    image.save(file_obj, format='PNG')
+    file_obj.seek(0)  # Move to the beginning of the file-like object
+    return file_obj
+
+
+def alart_push_notification(frame):
     res = send_message("ALART!!!! Danger was detected!")
-    print(f"The massage got {res}")
-    #     TODO: take photo from the stream and delete the local file
-    photo_path = "child_in_danger_1.jpg"
-    res = send_photo(photo_path)
-    print(f"The massage got {res}")
+    # print(f"The massage got {res}")
+    if frame is not None:
+        res = send_photo(frame)
+        # print(f"The massage got {res}")
 
 def main():
-    alart_push_notification()
+    alart_push_notification(None)
     return
 
 
