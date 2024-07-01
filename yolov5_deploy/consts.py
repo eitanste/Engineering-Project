@@ -2,8 +2,7 @@ PERSON = 'person'
 # coco labels
 cocc_safe_labels = ['dog', 'cat', 'backpack', 'sports ball', 'bottle', 'banana', 'apple', 'orange', 'donut',
                     'tv', 'laptop', 'cell phone', 'book', 'teddy bear']
-coco_dangerous_labels = ['wine glass', 'cup', 'fork', 'knife', 'remote', 'oven', 'toaster', 'vase',
-                         'potted plant', 'scissors', 'hair drier', 'skateboard', 'bottle']
+coco_dangerous_labels = ['wine glass', 'fork', 'knife', 'vase', 'potted plant', 'scissors', 'bottle', "baseball bat", 'bottle', "banana", "apple", 'broccoli', 'carrot']
 
 # imagenet 100
 
