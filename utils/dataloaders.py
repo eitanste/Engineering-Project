@@ -25,6 +25,8 @@ import yaml
 from PIL import ExifTags, Image, ImageOps
 from torch.utils.data import DataLoader, Dataset, dataloader, distributed
 from tqdm import tqdm
+import os
+import xml.etree.ElementTree as ET
 
 from utils.augmentations import (
     Albumentations,
@@ -543,13 +545,14 @@ class LoadImagesAndLabels(Dataset):
                 else:
                     raise FileNotFoundError(f"{prefix}{p} does not exist")
             self.im_files = sorted(x.replace("/", os.sep) for x in f if x.split(".")[-1].lower() in IMG_FORMATS)
+            labels_path = sorted(x.replace("/", os.sep).replace("Data", "Annotations") for x in f if x.split(".")[-1].lower() in IMG_FORMATS)
             # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in IMG_FORMATS])  # pathlib
             assert self.im_files, f"{prefix}No images found"
         except Exception as e:
             raise Exception(f"{prefix}Error loading data from {path}: {e}\n{HELP_URL}") from e
 
         # Check cache
-        self.label_files = img2label_paths(self.im_files)  # labels
+        self.label_files = img2label_paths(labels_path)  # labels
         cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix(".cache")
         try:
             cache, exists = np.load(cache_path, allow_pickle=True).item(), True  # load dict
@@ -1305,3 +1308,71 @@ def create_classification_dataloader(
         worker_init_fn=seed_worker,
         generator=generator,
     )  # or DataLoader(persistent_workers=True)
+
+
+def convert_xml_to_yolo(xml_file, output_dir, classes):
+    """
+    Convert an XML annotation file to a YOLO-compatible text file and save it.
+
+    Args:
+    xml_file (str): Path to the XML annotation file.
+    output_dir (str): Directory where the YOLO text file will be saved.
+    classes (list): List of class names in the dataset.
+
+    """
+    # Ensure the output directory exists
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Get image dimensions
+    size = root.find('size')
+    width = int(size.find('width').text)
+    height = int(size.find('height').text)
+
+    yolo_data = []
+
+    # Extract object details
+    for obj in root.findall('object'):
+        class_name = obj.find('name').text
+        class_id = classes.index(class_name)
+
+        bndbox = obj.find('bndbox')
+        xmin = int(bndbox.find('xmin').text)
+        ymin = int(bndbox.find('ymin').text)
+        xmax = int(bndbox.find('xmax').text)
+        ymax = int(bndbox.find('ymax').text)
+
+        # Convert to YOLO format
+        x_center = (xmin + xmax) / 2.0 / width
+        y_center = (ymin + ymax) / 2.0 / height
+        box_width = (xmax - xmin) / width
+        box_height = (ymax - ymin) / height
+
+        yolo_data.append(f"{class_id} {x_center} {y_center} {box_width} {box_height}")
+
+    # Generate output file path
+    base_filename = os.path.splitext(os.path.basename(xml_file))[0]
+    txt_file = os.path.join(output_dir, base_filename + '.txt')
+
+    # Save YOLO data to text file
+    with open(txt_file, 'w') as f:
+        f.write("\n".join(yolo_data))
+
+
+def load_classes(classes_file):
+    """
+    Load class names from a file.
+
+    Args:
+    classes_file (str): Path to the file containing class names.
+
+    Returns:
+    list: List of class names.
+    """
+    with open(classes_file, 'r') as f:
+        classes = f.read().strip().split('\n')
+    return classes
