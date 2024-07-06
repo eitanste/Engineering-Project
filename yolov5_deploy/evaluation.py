@@ -23,13 +23,10 @@ def load_model():
 
 
 def analyze_data(model, item_dir_path):
-<<<<<<< HEAD
-    from yolov5_deploy.deploy import plot_boxes
-    from yolov5_deploy.deploy import detectx
-=======
+
     from deploy import plot_boxes
     from deploy import detectx
->>>>>>> e14472f554451fe03d4175ef8bafb379c876da18
+
 
     classes = model.names
     item_images_dir_path = os.path.join(item_dir_path, "images")
@@ -76,11 +73,7 @@ def get_frame(img_path):
 
 
 def main():
-<<<<<<< HEAD
-    root_dir = r"C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\Evaluation"
-=======
     root_dir = r"../Evaluation"
->>>>>>> e14472f554451fe03d4175ef8bafb379c876da18
     root_sub_directories = get_sub_dirs(root_dir)
     model = load_model()
     for sub_dir in root_sub_directories:

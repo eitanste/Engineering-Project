@@ -75,7 +75,6 @@ def send_message(message: str) -> int:
 
 
 def send_photo(frame: numpy.ndarray) -> int:
-
     file_obj = get_image_from_np(frame)
 
     files = {'photo': file_obj}

@@ -34,19 +34,14 @@ In the handler, you can use args[0] to get current slider value.
 import BlynkLib
 import time
 
-# BLYNK_AUTH = 'YourAuthToken'
-
-tmr_start_time = time.time()
-
 # Initialize Blynk
 BLYNK_AUTH_TOKEN = "lL47FejJojAm1ZfvU-k6r7WZ64wVebJC"
 blynk = BlynkLib.Blynk(BLYNK_AUTH_TOKEN)
 
+# BLYNK_AUTH = 'YourAuthToken'
 
-# Register virtual pin handler
-# @blynk.on("V3")
-# def v3_write_handler(value):
-#     print('Current slider value: {}'.format(value[0]))
+tmr_start_time = time.time()
+
 
 
 while True:

@@ -1,10 +1,10 @@
 PERSON = 'person'
 # coco labels
-COCO_SAFE_LABELS = ['dog', 'cat', 'backpack', 'sports ball', 'donut', 'tv', 'laptop', 'cell phone', 'book', 'teddy bear']
+COCO_SAFE_LABELS = ['dog', 'cat', 'backpack', 'sports ball', 'donut', 'tv', 'laptop', 'book', 'teddy bear']
 COCO_DANGEROUS_LABELS = ['wine glass', 'cup', 'fork', 'knife', 'remote', 'oven', 'toaster', 'vase',
                          'potted plant', 'scissors', 'hair drier', 'skateboard', 'bottle', "baseball bat",  "bowl",  "sports ball", "banana", "apple", 'broccoli', 'carrot']
 
-SHARP_LABELS = ['wine glass', 'fork', 'knife', 'vase', 'potted plant', 'scissors', 'bottle', "baseball bat"]
+SHARP_LABELS = ['cell phone', 'wine glass', 'fork', 'knife', 'vase', 'potted plant', 'scissors', 'bottle', "baseball bat"]
 
 HOT_LABELS = ['cup', 'oven', 'toaster', 'hair drier', "bowl"]
 

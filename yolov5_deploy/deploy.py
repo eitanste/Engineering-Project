@@ -2,10 +2,10 @@
 CODER ZERO
 connect with me at: https://www.youtube.com/channel/UCKipQAvBc7CWZaPib4y8Ajg
 '''
-import time
 
-import cv2
 ### importing required libraries
+import time
+import cv2
 import torch
 
 from consts import PERSON, dangerous_labels, label_color_mapping
@@ -130,21 +130,25 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 def main(img_path=None, vid_path=None, vid_out=None):
     from main_manager import MainManager
 
-    manager = MainManager(img_path, vid_path, vid_out)
+    GROUP_CHAT_ID = -4186252810
+
+    manager = MainManager(img_path, vid_path, vid_out, GROUP_CHAT_ID)
     manager.run()
-    print(f"[INFO] Loading model... ")
-    ## loading the custom trained model
-    model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
-    # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
-    # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
-
-    classes = model.names  ### class names in string format
-
-    if img_path != None:
-        process_img_input(classes, img_path, model)
-
-    elif vid_path != None:
-        process_vid_input(classes, model, vid_out, vid_path)
+    # TODO: dell
+    # print("--------------- Did not should of been printed ------------------")
+    # print(f"[INFO] Loading model... ")
+    # ## loading the custom trained model
+    # model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
+    # # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
+    # # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
+    #
+    # classes = model.names  ### class names in string format
+    #
+    # if img_path != None:
+    #     process_img_input(classes, img_path, model)
+    #
+    # elif vid_path != None:
+    #     process_vid_input(classes, model, vid_out, vid_path)
 
 
 def process_vid_input(classes, model, vid_out, vid_path):
@@ -229,7 +233,7 @@ if __name__ == "__main__":
     s20FE_WEB_CONECTION = 'http://192.168.1.129:4747/video'
     # s20FE_WEB_CONECTION = 'http://10.1.1.137:4747/video'
 
-    main(vid_path=EOS_R_CAM, vid_out="default_out.mp4")
+    main(vid_path=s20FE_WIFI_CONECTION, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
     # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam
