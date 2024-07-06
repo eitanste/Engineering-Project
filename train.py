@@ -24,6 +24,7 @@ import time
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 try:
     import comet_ml  # must be imported before torch (if installed)
