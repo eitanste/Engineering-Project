@@ -2,15 +2,9 @@
 CODER ZERO
 connect with me at: https://www.youtube.com/channel/UCKipQAvBc7CWZaPib4y8Ajg
 '''
-### importing required libraries
-import os
-import subprocess
-import torch
 import cv2
-import time
-import math
-import BlynkLib
-import numpy as np
+### importing required libraries
+import torch
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 
@@ -49,7 +43,7 @@ def detectx(frame, model):
 
 
 ### ------------------------------------ to plot the BBox and results --------------------------------------------------------
-def plot_boxes(results, frame, blynk, classes):
+def plot_boxes(results, frame, classes):
     """
     --> This function takes results, frame and classes
     --> results: contains labels and coordinates predicted by model on the given frame
@@ -63,7 +57,7 @@ def plot_boxes(results, frame, blynk, classes):
     # print(f"[INFO] Total {n} detections. . . ")
     # print(f"[INFO] Looping through all detections. . . ")
 
-    # blynk.run()
+    dangerous_labels = ELEMENTS_CONFIG
 
     ### looping through the detections
     for i in range(n):
@@ -98,7 +92,6 @@ def plot_boxes(results, frame, blynk, classes):
         #     pass
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
-        # blynk.virtual_write(0, 1)
     else:
         print('NO DANGER DETECTED')
 
@@ -106,7 +99,7 @@ def plot_boxes(results, frame, blynk, classes):
 
 
 def check_dangerous_labels(hazards):
-    for label in dangerous_labels:
+    for label in ELEMENTS_CONFIG:
         if check_proximity_in_2D(hazards, label):
             return True
     return False
@@ -145,7 +138,6 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 
 
 def main(img_path=None, vid_path=None, vid_out=None):
-    blynk = init_blynk()
 
     print(f"[INFO] Loading model... ")
     ## loading the custom trained model
@@ -163,7 +155,7 @@ def main(img_path=None, vid_path=None, vid_out=None):
         results = detectx(frame, model=model)  ### DETECTION HAPPENING HERE
 
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        frame = plot_boxes(results, frame, blynk, classes=classes)
+        frame = plot_boxes(results, frame, classes=classes)
 
         cv2.namedWindow("img_only", cv2.WINDOW_NORMAL)  ## creating a free windown to show the result
 
@@ -207,7 +199,7 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = detectx(frame, model=model)
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                frame = plot_boxes(results, frame, blynk, classes=classes)
+                frame = plot_boxes(results, frame, classes=classes)
 
 
                 ret, buffer = cv2.imencode('.jpg', frame)
@@ -234,11 +226,6 @@ def main(img_path=None, vid_path=None, vid_out=None):
         cv2.destroyAllWindows()
 
 
-def init_blynk():
-    BLYNK_AUTH_TOKEN = "lL47FejJojAm1ZfvU-k6r7WZ64wVebJC"
-    blynk = BlynkLib.Blynk(BLYNK_AUTH_TOKEN)
-    return blynk
-
 @app.route('/video_feed')
 def video_feed():
     # Return the streaming response
@@ -250,6 +237,7 @@ def video_feed():
 @app.route('/elements', methods=['POST'])
 def elements():
     # Return the streaming response
+    global ELEMENTS_CONFIG
     ELEMENTS_CONFIG = request.json.get('elements')
     return jsonify({'OK': True})
 
@@ -263,7 +251,7 @@ def index():
         <title>Video Streaming</title>
     </head>
     <body>
-        <h1>Video Streaming</h1>
+        <h1>Video Streaming</h1>gti
         <img src="/video_feed" width="1080" height="720" />
     </body>
     </html>
