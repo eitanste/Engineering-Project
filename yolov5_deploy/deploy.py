@@ -233,7 +233,7 @@ if __name__ == "__main__":
     s20FE_WEB_CONECTION = 'http://192.168.1.129:4747/video'
     # s20FE_WEB_CONECTION = 'http://10.1.1.137:4747/video'
 
-    main(vid_path=s20FE_WIFI_CONECTION, vid_out="default_out.mp4")
+    main(vid_path=MAIN_WEB_CAM, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
     # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam

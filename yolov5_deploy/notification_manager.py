@@ -1,7 +1,11 @@
+import threading
+
 import requests
 import logging
 import time
 import numpy
+from datetime import datetime, timedelta
+from consts import dangerous_labels
 
 
 class NotificationManager:
@@ -17,11 +21,14 @@ class NotificationManager:
     # GROUP_CHAT_ID = -4186252810
 
 
-    def __init__(self, chat_id):
+    def __init__(self, chat_id, rate_limit_seconds: int = 20):
         self.chat_id = chat_id
         self.notification_sent = False
         self.cooldown_timer = None
         self.cooldown_duration = 5
+        self.rate_limit_seconds = rate_limit_seconds
+        self.dangerous_labels = dangerous_labels
+        self.last_notification_times = {label: datetime.min for label in dangerous_labels}
 
     def send_message(self, message: str) -> int:
         payload = {"chat_id": self.chat_id, "text": message}
@@ -62,20 +69,45 @@ class NotificationManager:
         file_obj.seek(0)
         return file_obj
 
+    # def check_and_send_notification_if_needed(self, dangerous_interaction, frame, last_notification_times):
+    #     if dangerous_interaction:
+    #         print('WARNING!!!! DANGER DETECTED')
+    #         if not self.notification_sent:
+    #             self.alart_push_notification(frame)
+    #             self.notification_sent = True
+    #             self.cooldown_timer = time.time()
+    #     else:
+    #         print('NO DANGER DETECTED')
+    #
+    #     if self.notification_sent:
+    #         elapsed_time = time.time() - self.cooldown_timer
+    #         if elapsed_time >= self.cooldown_duration:
+    #             self.notification_sent = False
+
+
+    def send_notification(self, message: str, frame: numpy.ndarray):
+        self.send_message(message)
+        if frame is not None:
+            self.send_photo(frame)
+
     def check_and_send_notification_if_needed(self, dangerous_interaction, frame):
         if dangerous_interaction:
-            print('WARNING!!!! DANGER DETECTED')
-            if not self.notification_sent:
-                self.alart_push_notification(frame)
-                self.notification_sent = True
-                self.cooldown_timer = time.time()
+            current_time = datetime.now()
+            last_notification_time = self.last_notification_times[dangerous_interaction]
+            if current_time - last_notification_time >= timedelta(seconds=self.rate_limit_seconds):
+                print(f"ALERT!!!! Danger was detected: {dangerous_interaction}!")
+                threading.Thread(target=self.send_notification,
+                                 args=(f"ALERT!!!! Danger was detected: {dangerous_interaction}!", frame)).start()
+                # self.send_message(f"ALERT!!!! Danger was detected: {dangerous_interaction}!")
+                # self.send_photo(frame)
+                self.last_notification_times[dangerous_interaction] = current_time
+            else:
+                print(f"Danger detected too recently for {dangerous_interaction}." +
+                      f"Last notification time: {last_notification_time}" +
+                      f"Current time: {current_time}" +
+                      f"Wait {self.rate_limit_seconds - (current_time - last_notification_time).seconds} seconds.")
         else:
             print('NO DANGER DETECTED')
-
-        if self.notification_sent:
-            elapsed_time = time.time() - self.cooldown_timer
-            if elapsed_time >= self.cooldown_duration:
-                self.notification_sent = False
 
     def alart_push_notification(self, frame):
         res = self.send_message("ALART!!!! Danger was detected!")

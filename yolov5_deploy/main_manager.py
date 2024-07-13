@@ -51,7 +51,8 @@ class MainManager:
                 frame, hazards = self.process_frame(frame)
 
                 dangerous_interaction = self.detector.check_interactions_with_dangerous_objects(hazards)
-                self.notification_manager.check_and_send_notification_if_needed(dangerous_interaction, frame)
+                self.notification_manager.check_and_send_notification_if_needed(dangerous_interaction,
+                                                                                frame)
 
                 if self.vid_out:
                     out.write(frame)
