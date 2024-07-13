@@ -18,6 +18,7 @@ CORS(app)
 
 ELEMENTS_CONFIG = []
 frame = None
+should_play_sound = False
 PERSON = 'person'
 # dangerous_labels = ['vase', 'banana']
 
@@ -51,6 +52,7 @@ def plot_boxes(results, frame, classes):
     --> results: contains labels and coordinates predicted by model on the given frame
     --> classes: contains the strting labels
     """
+    global should_play_sound
     labels, cord = results
     n = len(labels)
     x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -94,8 +96,10 @@ def plot_boxes(results, frame, classes):
         #     pass
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
+        should_play_sound = True
     else:
         print('NO DANGER DETECTED')
+        should_play_sound = False
 
     return frame
 
@@ -248,6 +252,11 @@ def video_feed():
                         mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/should_play_sound', methods=['GET'])
+def play_sound():
+    global should_play_sound
+    return jsonify({'should_play_sound': should_play_sound})
 
 @app.route('/elements_status', methods=['GET'])
 def elements_status():
