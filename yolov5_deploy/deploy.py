@@ -2,6 +2,8 @@
 CODER ZERO
 connect with me at: https://www.youtube.com/channel/UCKipQAvBc7CWZaPib4y8Ajg
 '''
+from pathlib import Path
+import time
 import cv2
 ### importing required libraries
 import torch
@@ -15,7 +17,8 @@ app = Flask(__name__)
 CORS(app)
 
 ELEMENTS_CONFIG = []
-
+frame = None
+should_play_sound = False
 PERSON = 'person'
 # dangerous_labels = ['vase', 'banana']
 
@@ -49,6 +52,7 @@ def plot_boxes(results, frame, classes):
     --> results: contains labels and coordinates predicted by model on the given frame
     --> classes: contains the strting labels
     """
+    global should_play_sound
     labels, cord = results
     n = len(labels)
     x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -92,8 +96,10 @@ def plot_boxes(results, frame, classes):
         #     pass
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
+        should_play_sound = True
     else:
         print('NO DANGER DETECTED')
+        should_play_sound = False
 
     return frame
 
@@ -137,12 +143,11 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
 
-def main(img_path=None, vid_path=None, vid_out=None):
+def main(img_path=None, vid_path=None, vid_out=None, first_run=False):
     global frame
-
     print(f"[INFO] Loading model... ")
     ## loading the custom trained model
-    model = torch.hub.load('ultralytics/yolov5', 'yolov5m6')
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
     # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
     # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
 
@@ -207,9 +212,10 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 frame = buffer.tobytes()
 
                 # Use a yield statement to return the frame in a streaming response
-                # yield (b'--frame\r\n'
-                #     b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
+                if first_run:
+                    Path('tmp.jpg').write_bytes(frame)
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 continue
                 cv2.imshow("vid_out", frame)
                 if vid_out:
@@ -227,26 +233,37 @@ def main(img_path=None, vid_path=None, vid_out=None):
         ## closing all windows
         cv2.destroyAllWindows()
 
-
 def frame_yielder():
-    global frame
     while True:
-        yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        time.sleep(0.1)
+        tmp_frame = Path('tmp.jpg').read_bytes()
+        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + tmp_frame + b'\r\n')
+
 
 @app.route('/video_feed')
 def video_feed():
-    global frame
-    if not frame:
-        return Response(main(vid_path=2, vid_out="default_out.mp4"),
-                            mimetype='multipart/x-mixed-replace; boundary=frame')
     # Return the streaming response
-    # return Response(main(vid_path=2, vid_out="default_out.mp4"),
-    #                 mimetype='multipart/x-mixed-replace; boundary=frame')
+    global frame
+
+    if frame is not None:
+        return Response(frame_yielder(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return Response(main(vid_path=0, vid_out="default_out.mp4", first_run=True),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
-    return Response(frame_yielder(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/should_play_sound', methods=['GET'])
+def play_sound():
+    global should_play_sound
+    return jsonify({'should_play_sound': should_play_sound})
+
+@app.route('/elements_status', methods=['GET'])
+def elements_status():
+    global frame
+    if frame is not None:
+        return jsonify({'already_set': True})
+    return jsonify({'already_set': False})
 
 @app.route('/elements', methods=['POST'])
 def elements():
@@ -265,16 +282,13 @@ def index():
         <title>Video Streaming</title>
     </head>
     <body>
-        <h1>Video Streaming</h1>gti
+        <h1>Video Streaming</h1>
         <img src="/video_feed" width="1080" height="720" />
     </body>
     </html>
     """
 
-frame = None
-
 if __name__ == "__main__":
-    #main(vid_path=2, vid_out="default_out.mp4")
     app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
     # app.run(host='0.0.0.0', port=5001) # For Testing
     #main(vid_path=0, vid_out="default_out.mp4")
