@@ -2,6 +2,8 @@
 CODER ZERO
 connect with me at: https://www.youtube.com/channel/UCKipQAvBc7CWZaPib4y8Ajg
 '''
+from pathlib import Path
+import time
 import cv2
 ### importing required libraries
 import torch
@@ -15,7 +17,7 @@ app = Flask(__name__)
 CORS(app)
 
 ELEMENTS_CONFIG = []
-
+frame = None
 PERSON = 'person'
 # dangerous_labels = ['vase', 'banana']
 
@@ -137,8 +139,8 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
 
-def main(img_path=None, vid_path=None, vid_out=None):
-
+def main(img_path=None, vid_path=None, vid_out=None, first_run=False):
+    global frame
     print(f"[INFO] Loading model... ")
     ## loading the custom trained model
     model = torch.hub.load('ultralytics/yolov5', 'yolov5m6')
@@ -206,8 +208,10 @@ def main(img_path=None, vid_path=None, vid_out=None):
                 frame = buffer.tobytes()
 
                 # Use a yield statement to return the frame in a streaming response
-                yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                if first_run:
+                    Path('tmp.jpg').write_bytes(frame)
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 continue
                 cv2.imshow("vid_out", frame)
                 if vid_out:
@@ -225,12 +229,23 @@ def main(img_path=None, vid_path=None, vid_out=None):
         ## closing all windows
         cv2.destroyAllWindows()
 
+def frame_yielder():
+    while True:
+        time.sleep(0.1)
+        tmp_frame = Path('tmp.jpg').read_bytes()
+        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + tmp_frame + b'\r\n')
+
 
 @app.route('/video_feed')
 def video_feed():
     # Return the streaming response
-    return Response(main(vid_path=2, vid_out="default_out.mp4"),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    global frame
+
+    if frame is not None:
+        return Response(frame_yielder(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return Response(main(vid_path=0, vid_out="default_out.mp4", first_run=True),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -258,8 +273,8 @@ def index():
     """
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
-    # app.run(host='0.0.0.0', port=5001) # For Testing
+    #app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
+    app.run(host='0.0.0.0', port=5001) # For Testing
     #main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
