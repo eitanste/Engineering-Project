@@ -249,6 +249,13 @@ def video_feed():
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/elements_status', methods=['GET'])
+def elements_status():
+    global frame
+    if frame is not None:
+        return jsonify({'already_set': True})
+    return jsonify({'already_set': False})
+
 @app.route('/elements', methods=['POST'])
 def elements():
     # Return the streaming response
