@@ -26,7 +26,6 @@ class NotificationManager:
         self.chat_id = chat_id
         self.notification_sent = False
         self.cooldown_timer = None
-        self.cooldown_duration = 5
         self.consecutive_frames_threshold = consecutive_frames_threshold
         self.rate_limit_seconds = rate_limit_seconds
         self.dangerous_labels = dangerous_labels

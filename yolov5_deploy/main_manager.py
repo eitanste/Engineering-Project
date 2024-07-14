@@ -12,7 +12,7 @@ class MainManager:
         self.vid_out = vid_out
         self.notification_manager = NotificationManager(chat_id=GROUP_CHAT_ID,
                                                         rate_limit_seconds=20,
-                                                        consecutive_frames_threshold=6)
+                                                        consecutive_frames_threshold=2)
         self.detector = ObjectDetector(self.notification_manager)
 
         ## loading the custom trained model
@@ -48,7 +48,7 @@ class MainManager:
             if ret:
                 consts.frame, hazards = self.process_frame(frame)
 
-                dangerous_interaction = self.detector.check_interactions_with_dangerous_objects(hazards)
+                dangerous_interaction = self.detector.check_interactions_with_dangerous_objects(hazards, consts.frame)
                 self.notification_manager.check_and_send_notification_if_needed(dangerous_interaction,
                                                                                 consts.frame)
                 if first_run:
