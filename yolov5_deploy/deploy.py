@@ -99,7 +99,7 @@ def plot_boxes(results, frame, frame_counter, msg, midas, pose_estimation_model,
 def check_dangerous_labels(hazards, human_keypoints, frame, msg, midas):
     relevant_keypoints_labels = check_proximity_in_2D(hazards, human_keypoints)
     if relevant_keypoints_labels:
-        is_dangerous = measure_distance_in_3D(hazards, relevant_keypoints_labels, frame, midas)
+        is_dangerous = measure_distance_in_3D(hazards, human_keypoints,relevant_keypoints_labels,  frame, midas)
         if is_dangerous:
             msg = "WARNING!!!! DANGER DETECTED"
             return True, msg
@@ -110,15 +110,10 @@ def check_proximity_in_2D(hazards, human_keypoints):
     for label in dangerous_labels:
         if is_person_and_hazard_in_one_frame(hazards, label):
             for keypoint in human_keypoints:
-                if keypoint[0] != 0 and keypoint[1] != 0 and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 50 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 50:
+                if keypoint[0] != 0 and keypoint[1] != 0 and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 100 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 100:
                     relevant_keypoints_labels.append((keypoint, label))
     return relevant_keypoints_labels
 
-
-def check_proximity_in_3D_old_but_gold(hazards,  human_keypoints, label, frame, midas):
-    # if is_person_and_hazard_in_one_frame(hazards, label):
-    #     print("Distance btw obj is " + str((hazards[PERSON][0] / 2) - hazards[label][0] / 2))
-    return is_person_and_hazard_in_one_frame(hazards, label) and measure_distance_in_3D(hazards,human_keypoints,  label, frame, midas)
 
 
 
@@ -167,16 +162,12 @@ def measure_distance_in_3D_all_keypoints(hazards, relevant_keypoints_labels, fra
     return False
 
 def calculate_weights(hazard_bbox_center, keypoints):
-    weights = []
-    for keypoint in keypoints:
-        distance = np.sqrt((hazard_bbox_center[0] - keypoint[0])**2 + (hazard_bbox_center[1] - keypoint[1])**2)
-        weights.append(1 / (distance + 1e-6))  # Adding a small value to avoid division by zero
-    total_weight = sum(weights)
-    normalized_weights = [w / total_weight for w in weights]
+    distances = np.array([np.sqrt((hazard_bbox_center[0] - kp[0])**2 + (hazard_bbox_center[1] - kp[1])**2) for kp in keypoints])
+    weights = 1 / (distances + 1e-6)  # Avoid division by zero
+    normalized_weights = weights / np.sum(weights)
     return normalized_weights
 
-
-def measure_distance_in_3D(hazards, relevant_keypoints_labels, frame, midas):
+def measure_distance_in_3D(hazards, human_keypoints, relevant_keypoints_labels, frame, midas):
     # Compute the depth map once for the entire frame
     model_type = "DPT_Hybrid"  # MiDaS v3 - Hybrid (medium accuracy, medium inference speed)
 
@@ -211,21 +202,29 @@ def measure_distance_in_3D(hazards, relevant_keypoints_labels, frame, midas):
     depth_map = prediction.cpu().numpy()
 
     for keypoint, label in relevant_keypoints_labels:
+        print("keypoint, label")
+        print(keypoint, label)
+
         hazard_bbox_center = get_center_of_bbox(hazards[label])
         hazard_depth = depth_map[hazard_bbox_center[1], hazard_bbox_center[0]]
 
         # Calculate weights for each keypoint
-        keypoints = [kp for kp, lbl in relevant_keypoints_labels if lbl == label]
-        weights = calculate_weights(hazard_bbox_center, keypoints)
+        weights = calculate_weights(hazard_bbox_center, human_keypoints)
 
         # Compute weighted average depth
         weighted_sum = 0
-        for kp, weight in zip(keypoints, weights):
+        for kp, weight in zip(human_keypoints, weights):
             weighted_sum += depth_map[int(kp[1]), int(kp[0])] * weight
         weighted_avg_depth = weighted_sum
 
         depth_diff = abs(hazard_depth - weighted_avg_depth)
-        if depth_diff < 200:  # Adjust threshold as needed
+        print("hazard_depth")
+        print(hazard_depth)
+
+        print("depth_diff")
+        print(depth_diff)
+
+        if depth_diff < 50:  # Adjust threshold as needed
             return True
     return False
 
@@ -278,8 +277,8 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 def main(img_path=None, vid_path=None, vid_out=None):
     print(f"[INFO] Loading model... ")
     
-    depth_model_type = "DPT_Hybrid"
-    object_detection_model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
+    depth_model_type = "MiDaS_small"
+    object_detection_model = torch.hub.load('ultralytics/yolov5', 'yolov5s6')
     depth_estimation_model = torch.hub.load("intel-isl/MiDaS", depth_model_type)
     pose_estimation_model = YOLO('yolov8x-pose.pt')
 
@@ -352,6 +351,6 @@ s20FE_WIFI_CONECTION = 3
 s20FE_WEB_CONECTION = 'http://192.168.1.129:4747/video'
 
 # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
-main(vid_path=MAIN_WEB_CAM,vid_out="knives_tail-out_on_x6.mp4")  # for webcam
+main(vid_path=0,vid_out="knives_tail-out_on_x6.mp4")  # for webcam
 
 
