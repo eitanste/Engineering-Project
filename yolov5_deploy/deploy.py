@@ -248,7 +248,7 @@ def video_feed():
     if frame is not None:
         return Response(frame_yielder(), mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
-        return Response(main(vid_path=0, vid_out="default_out.mp4", first_run=True),
+        return Response(main(vid_path=2, vid_out="default_out.mp4", first_run=True),
                         mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -291,6 +291,8 @@ def index():
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
     # app.run(host='0.0.0.0', port=5001) # For Testing
+
+    
     #main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
