@@ -49,6 +49,7 @@ class MainManager:
                 consts.frame, hazards = self.process_frame(frame)
 
                 dangerous_interaction = self.detector.check_interactions_with_dangerous_objects(hazards, consts.frame)
+
                 self.notification_manager.check_and_send_notification_if_needed(dangerous_interaction,
                                                                                 consts.frame)
                 if first_run:
