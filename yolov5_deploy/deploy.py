@@ -21,8 +21,9 @@ context = (r"C:\Users\eitan\OneDrive\Desktop\fullchain.pem", r"C:\Users\eitan\On
 app = Flask(__name__)
 CORS(app)
 
+
 ELEMENTS_CONFIG = []
-frame = None
+#frame = None
 should_play_sound = False
 
 class CameraInput(Enum):
@@ -33,10 +34,11 @@ class CameraInput(Enum):
     s20FE_WIFI_CONECTION = 3
     s20FE_WEB_CONECTION = 'http://192.168.1.129:4747/video'
 
-CAMERA_INPUT = CameraInput.MAIN_WEB_CAM.value
+
+CAMERA_INPUT = CameraInput.EOS_R_CAM.value
 
 
-### -------------------------------------- function to run detection ---------------------------------------------------------
+### ---CAMERA_INPUT----------------------------------- function to run detection ---------------------------------------------------------
 def detectx(frame, model):
     frame = [frame]
     results = model(frame)
@@ -52,7 +54,8 @@ def plot_boxes(results, frame, classes):
     --> results: contains labels and coordinates predicted by model on the given frame
     --> classes: contains the strting labels
     """
-    # global should_play_sound
+    global should_play_sound
+    global ELEMENTS_CONFIG
     import consts
     labels, cord = results
     n = len(labels)
@@ -80,10 +83,10 @@ def plot_boxes(results, frame, classes):
 
     if check_dangerous_labels(hazards):
         print('WARNING!!!! DANGER DETECTED')
-        consts.should_play_sound = True
+        should_play_sound = True
     else:
         print('NO DANGER DETECTED')
-        consts.should_play_sound = False
+        should_play_sound = False
 
     return frame
 
@@ -101,6 +104,7 @@ def plot_bbox_by_color(frame, row, text_d, x1, x2, y1, y2, color):
 
 
 def check_dangerous_labels(hazards):
+    global ELEMENTS_CONFIG
     for label in ELEMENTS_CONFIG:
         if check_proximity_in_2D(hazards, label):
             return True
@@ -139,110 +143,25 @@ def is_person_and_hazard_in_one_frame(hazards, label):
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
 
-def main(img_path=None, vid_path=None, vid_out=None, first_run=False):
+def main(img_path=None, vid_path=None, vid_out=None, first_run=False, element_config=[]):
     from main_manager import MainManager
-    # global frame
+    global ELEMENTS_CONFIG
     import consts
 
     GROUP_CHAT_ID = -4186252810
 
-    manager = MainManager(img_path, vid_path, vid_out, GROUP_CHAT_ID)
+    manager = MainManager(img_path, vid_path, vid_out, GROUP_CHAT_ID, element_config)
     yield from manager.run(first_run)
-    # print(f"[INFO] Loading model... ")
-    # ## loading the custom trained model
-    # model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
-    # # model =  torch.hub.load('ultralytics/yolov5', path='last.pt',force_reload=True) ## if you want to download the git repo and then rn #the detection
-    # # model =  torch.hub.load('/Users/tanyafainstein/Desktop/project/project_yolov5/Engineering-Project', 'custom', source ='local', path='last.pt',force_reload=True) ### The repo is stored locally
-    #
-    # classes = model.names  ### class names in string format
-    #
-    # if img_path != None:
-    #     print(f"[INFO] Working with image: {img_path}")
-    #     consts.frame = cv2.imread(img_path)
-    #     consts.frame = cv2.cvtColor(consts.frame, cv2.COLOR_BGR2RGB)
-    #
-    #     results = detectx(consts.frame, model=model)  ### DETECTION HAPPENING HERE
-    #
-    #     consts.frame = cv2.cvtColor(consts.frame, cv2.COLOR_RGB2BGR)
-    #     consts.frame = plot_boxes(results, consts.frame, classes=classes)
-    #
-    #     cv2.namedWindow("img_only", cv2.WINDOW_NORMAL)  ## creating a free windown to show the result
-    #
-    #     while True:
-    #         # frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
-    #
-    #         cv2.imshow("img_only", consts.frame)
-    #
-    #         if cv2.waitKey(5) & 0xFF == 27:
-    #             # print(f"[INFO] Exiting. . . ")
-    #             cv2.imwrite("final_output.jpg", consts.frame)  ## if you want to save he output result.
-    #
-    #             break
-    #
-    # elif vid_path != None:
-    #     # print(f"[INFO] Working with video: {vid_path}")
-    #
-    #     ## reading the video
-    #     cap = cv2.VideoCapture(vid_path)
-    #
-    #     if vid_out:  ### creating the video writer if video output path is given
-    #
-    #         # by default VideoCapture returns float instead of int
-    #         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    #         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    #         fps = int(cap.get(cv2.CAP_PROP_FPS))
-    #         codec = cv2.VideoWriter_fourcc(*'mp4v')  ##(*'XVID')
-    #         out = cv2.VideoWriter(vid_out, codec, fps, (width, height))
-    #
-    #
-    #     # assert cap.isOpened()
-    #     frame_no = 1
-    #
-    #     #cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
-    #     while True:
-    #         # start_time = time.time()
-    #         ret, consts.frame = cap.read()
-    #         if ret:
-    #             # print(f"[INFO] Working with frame {frame_no} ")
-    #
-    #             consts.frame = cv2.cvtColor(consts.frame, cv2.COLOR_BGR2RGB)
-    #             results = detectx(consts.frame, model=model)
-    #             consts.frame = cv2.cvtColor(consts.frame, cv2.COLOR_RGB2BGR)
-    #             consts.frame = plot_boxes(results, consts.frame, classes=classes)
-    #
-    #
-    #             ret, buffer = cv2.imencode('.jpg', consts.frame)
-    #             consts.frame = buffer.tobytes()
-    #
-    #             # Use a yield statement to return the frame in a streaming response
-    #             if first_run:
-    #                 Path('tmp.jpg').write_bytes(consts.frame)
-    #                 yield (b'--frame\r\n'
-    #                     b'Content-Type: image/jpeg\r\n\r\n' + consts.frame + b'\r\n')
-    #             continue
-    #             cv2.imshow("vid_out", consts.frame)
-    #             if vid_out:
-    #                 # print(f"[INFO] Saving output video. . . ")
-    #                 out.write(consts.frame)
-    #
-    #             if cv2.waitKey(5) & 0xFF == 27:
-    #                 break
-    #             frame_no += 1
-    #
-    #     # print(f"[INFO] Clening up. . . ")
-    #     ### releaseing the writer
-    #     out.release()
-    #
-    #     ## closing all windows
-    #     cv2.destroyAllWindows()
-
 
 
 def frame_yielder():
+    last_frame = None
     while True:
         time.sleep(0.033)  # defines the frame rate
         tmp_frame = Path('tmp.jpg').read_bytes()
-        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + tmp_frame + b'\r\n')
+        if last_frame != tmp_frame:
+            last_frame = tmp_frame
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + tmp_frame + b'\r\n')
 
 
 @app.route('/video_feed')
@@ -250,35 +169,32 @@ def video_feed():
     # Return the streaming response
     # global frame
     import consts
+    global ELEMENTS_CONFIG
 
     if consts.frame is not None:
         return Response(frame_yielder(), mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
-        return Response(main(vid_path=CAMERA_INPUT, vid_out="default_out.mp4", first_run=True),
+        return Response(main(vid_path=CAMERA_INPUT, vid_out="default_out.mp4", first_run=True, element_config=ELEMENTS_CONFIG),
                         mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(main(vid_path=3, vid_out="default_out.mp4"),
     #                 mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/should_play_sound', methods=['GET'])
 def play_sound():
-    # global should_play_sound
-    import consts
-    return jsonify({'should_play_sound': consts.should_play_sound})
+    should_play_sound_file = Path('play_sound').read_text().strip().lower() == 'true' if Path('play_sound').exists() else False
+    #print(f'Read file {should_play_sound_file}')
+    return jsonify({'should_play_sound': should_play_sound_file})
 
 @app.route('/elements_status', methods=['GET'])
 def elements_status():
-    # global frame
-    import consts
-    if consts.frame is not None:
-        return jsonify({'already_set': True})
-    return jsonify({'already_set': False})
+    return jsonify({'already_set': Path('already_set_elements').exists()})
 
 @app.route('/elements', methods=['POST'])
 def elements():
     # Return the streaming response
-    # global ELEMENTS_CONFIG
-    import consts
-    consts.ELEMENTS_CONFIG = request.json.get('elements')
+    global ELEMENTS_CONFIG
+    ELEMENTS_CONFIG = request.json.get('elements')
+    Path('already_set_elements').touch()
     return jsonify({'OK': True})
 
 @app.route('/')
@@ -298,7 +214,8 @@ def index():
     """
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001, ssl_context=context) # For Production
+    Path('already_set_elements').unlink() if Path('already_set_elements').exists() else None
+    app.run(host='0.0.0.0', port=5001, ssl_context=context)  # For Production
     # app.run(host='0.0.0.0', port=5001) # For Testing
     #main(vid_path=0, vid_out="default_out.mp4")
 

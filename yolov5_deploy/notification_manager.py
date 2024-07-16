@@ -1,4 +1,5 @@
 import threading
+from pathlib import Path
 
 import cv2
 import requests
@@ -25,7 +26,7 @@ class NotificationManager:
     def __init__(self, chat_id, rate_limit_seconds: int = 20, consecutive_frames_threshold: int = 2):
         self.current_frame_number = 0
         self.chat_id = chat_id
-        self.notification_sent = False
+        self.notification_sent = True
         self.cooldown_timer = None
         self.consecutive_frames_threshold = consecutive_frames_threshold
         self.rate_limit_seconds = rate_limit_seconds
@@ -96,6 +97,7 @@ class NotificationManager:
         cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
         cv2.rectangle(frame, top_left, bottom_right, box_color, box_thickness)
         cv2.putText(frame, text, position, cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, thickness)
+
     def check_and_send_notification_if_needed(self, dangerous_interaction, frame):
         self.current_frame_number += 1
         if dangerous_interaction:
@@ -107,22 +109,17 @@ class NotificationManager:
             self.last_frame_numbers[dangerous_interaction] = self.current_frame_number
             current_time = datetime.now()
             last_notification_time = self.last_notification_times[dangerous_interaction]
+            if not self.notification_sent:
+                self.notification_sent = True
+                self.alert_timer = time.time()
             if current_time - last_notification_time >= timedelta(seconds=self.rate_limit_seconds):
                 if self.consecutive_detections[dangerous_interaction] >= self.consecutive_frames_threshold:
+                    Path('play_sound').write_text('True')
+                    #print(f'Wrote file {Path("play_sound").read_text()}')
                     print(f"ALERT!!!! Danger was detected: {dangerous_interaction}!")
-                    if not self.notification_sent:
-                        self.notification_sent = True
-                        self.cooldown_timer = time.time()
-                        self.alert_timer = time.time()
                     threading.Thread(target=self.send_notification,
                                      args=(f"ALERT!!!! Danger was detected: {dangerous_interaction}!", frame)).start()
                     self.last_notification_times[dangerous_interaction] = current_time
-                if self.notification_sent:
-                    alert_elapsed_time = time.time() - self.alert_timer
-                    if alert_elapsed_time < 3:  # Keep alert on screen for 3 seconds
-                        self.draw_alert(frame, text="DANGER DETECTED")
-                    if alert_elapsed_time >= 3:
-                        self.notification_sent = False
             else:
                 print(f"Danger detected too recently for {dangerous_interaction}." +
                       f"Last notification time: {last_notification_time}" +
@@ -132,7 +129,15 @@ class NotificationManager:
             for label in self.consecutive_detections:
                 self.consecutive_detections[label] = 0
                 self.last_frame_numbers[label] = -1
+            Path('play_sound').unlink() if Path('play_sound').exists() else None
             print('NO DANGER DETECTED')
+
+        if self.notification_sent:
+            alert_elapsed_time = time.time() - self.alert_timer
+            if alert_elapsed_time < 2:  # Keep alert on screen for 2 seconds
+                self.draw_alert(frame, text="DANGER DETECTED")
+            if alert_elapsed_time >= 2:
+                self.notification_sent = False
 
     def alart_push_notification(self, frame):
         res = self.send_message("ALART!!!! Danger was detected!")

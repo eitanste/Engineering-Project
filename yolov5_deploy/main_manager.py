@@ -6,14 +6,15 @@ from object_detector import ObjectDetector
 
 
 class MainManager:
-    def __init__(self, img_path=None, vid_path=None, vid_out=None, GROUP_CHAT_ID=None):
+    def __init__(self, img_path=None, vid_path=None, vid_out=None, GROUP_CHAT_ID=None, element_config=[]):
         self.img_path = img_path
         self.vid_path = vid_path
         self.vid_out = vid_out
+        self.element_config = element_config
         self.notification_manager = NotificationManager(chat_id=GROUP_CHAT_ID,
                                                         rate_limit_seconds=20,
                                                         consecutive_frames_threshold=2)
-        self.detector = ObjectDetector(self.notification_manager)
+        self.detector = ObjectDetector(self.notification_manager, dangerous_labels=element_config)
 
         ## loading the custom trained model
         print(f"[INFO] Loading model... ")

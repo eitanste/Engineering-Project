@@ -1,11 +1,12 @@
 import math
+from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
 from ultralytics import YOLO
 
-from consts import PERSON, dangerous_labels
+from consts import PERSON
 from notification_manager import NotificationManager
 from object_interaction import ObjectInteraction
 from datetime import datetime, timedelta
@@ -25,16 +26,16 @@ COCO_PAIRS = [
 class ObjectDetector:
 
 
-    def __init__(self, notification_manager: NotificationManager, rate_limit_seconds: int = 60):
-        self.depth_threshold = 100
+    def __init__(self, notification_manager: NotificationManager, rate_limit_seconds: int = 60, dangerous_labels = []):
+        self.depth_threshold = 400
         self.notification_manager = notification_manager
         self.object_interactions = {}
         self.detection_threshold = 0.7  # Confidence threshold
         self.min_consecutive_detections = 3  # Minimum frames for confirmation
         self.rate_limit_seconds = rate_limit_seconds
         self.dangerous_labels = dangerous_labels
-        self.last_notification_times = {label: datetime.min for label in dangerous_labels}
-        depth_model_type = "MiDaS_small"
+        self.last_notification_times = {label: datetime.min for label in self.dangerous_labels}
+        depth_model_type = "DPT_Hybrid"
         self.depth_estimation_model = torch.hub.load("intel-isl/MiDaS", depth_model_type)
         self.pose_estimation_model = YOLO('yolov8x-pose.pt')
         self.load_model()
@@ -105,10 +106,10 @@ class ObjectDetector:
 
     def check_proximity_in_2D(self, hazards):
         relevant_keypoints_labels = []
-        for label in dangerous_labels:
+        for label in self.dangerous_labels:
             if is_person_and_hazard_in_one_frame(hazards, label):
                 for keypoint in self.keypoints:
-                    if (keypoint[0] != 0 and keypoint[1] != 0) and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 100 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 100:
+                    if (keypoint[0] != 0 and keypoint[1] != 0) and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 70 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 70:
                         relevant_keypoints_labels.append((keypoint, label))
         return relevant_keypoints_labels
 
