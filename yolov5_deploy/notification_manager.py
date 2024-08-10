@@ -113,13 +113,13 @@ class NotificationManager:
                 self.notification_sent = True
                 self.alert_timer = time.time()
             if current_time - last_notification_time >= timedelta(seconds=self.rate_limit_seconds):
-                if self.consecutive_detections[dangerous_interaction] >= self.consecutive_frames_threshold:
-                    Path('play_sound').write_text('True')
-                    #print(f'Wrote file {Path("play_sound").read_text()}')
-                    print(f"ALERT!!!! Danger was detected: {dangerous_interaction}!")
-                    threading.Thread(target=self.send_notification,
-                                     args=(f"ALERT!!!! Danger was detected: {dangerous_interaction}!", frame)).start()
-                    self.last_notification_times[dangerous_interaction] = current_time
+                # if self.consecutive_detections[dangerous_interaction] >= self.consecutive_frames_threshold:
+                Path('play_sound').write_text('True')
+                #print(f'Wrote file {Path("play_sound").read_text()}')
+                print(f"ALERT!!!! Danger was detected: {dangerous_interaction}!")
+                threading.Thread(target=self.send_notification,
+                                 args=(f"ALERT!!!! Danger was detected: {dangerous_interaction}!", frame)).start()
+                self.last_notification_times[dangerous_interaction] = current_time
             else:
                 print(f"Danger detected too recently for {dangerous_interaction}." +
                       f"Last notification time: {last_notification_time}" +
@@ -134,9 +134,9 @@ class NotificationManager:
 
         if self.notification_sent:
             alert_elapsed_time = time.time() - self.alert_timer
-            if alert_elapsed_time < 2:  # Keep alert on screen for 2 seconds
+            if alert_elapsed_time < 4:  # Keep alert on screen for 2 seconds
                 self.draw_alert(frame, text="DANGER DETECTED")
-            if alert_elapsed_time >= 2:
+            if alert_elapsed_time >= 4:
                 self.notification_sent = False
 
     def alart_push_notification(self, frame):

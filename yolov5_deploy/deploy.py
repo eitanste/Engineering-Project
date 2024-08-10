@@ -151,7 +151,7 @@ def main(img_path=None, vid_path=None, vid_out=None, first_run=False, element_co
     GROUP_CHAT_ID = -4186252810
 
     manager = MainManager(img_path, vid_path, vid_out, GROUP_CHAT_ID, element_config)
-    yield from manager.run(first_run)
+    manager.run(first_run)
 
 
 def frame_yielder():
@@ -214,10 +214,10 @@ def index():
     """
 
 if __name__ == "__main__":
-    Path('already_set_elements').unlink() if Path('already_set_elements').exists() else None
-    app.run(host='0.0.0.0', port=5001, ssl_context=context)  # For Production
+    # Path('already_set_elements').unlink() if Path('already_set_elements').exists() else None
+    # app.run(host='0.0.0.0', port=5001, ssl_context=context)  # For Production
     # app.run(host='0.0.0.0', port=5001) # For Testing
-    #main(vid_path=0, vid_out="default_out.mp4")
+    main(vid_path=0, vid_out="default_out.mp4")
 
     # main(vid_path="facemask.mp4",vid_out="facemask_result.mp4") ### for custom video
          # , vid_out="knives_tail-out_on_x6.mp4")  # for webcam

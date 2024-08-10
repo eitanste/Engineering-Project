@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from ultralytics import YOLO
 
-from consts import PERSON
+from consts import PERSON, dangerous_labels
 from notification_manager import NotificationManager
 from object_interaction import ObjectInteraction
 from datetime import datetime, timedelta
@@ -26,7 +26,7 @@ COCO_PAIRS = [
 class ObjectDetector:
 
 
-    def __init__(self, notification_manager: NotificationManager, rate_limit_seconds: int = 60, dangerous_labels = []):
+    def __init__(self, notification_manager: NotificationManager, rate_limit_seconds: int = 60):
         self.depth_threshold = 400
         self.notification_manager = notification_manager
         self.object_interactions = {}
@@ -109,7 +109,7 @@ class ObjectDetector:
         for label in self.dangerous_labels:
             if is_person_and_hazard_in_one_frame(hazards, label):
                 for keypoint in self.keypoints:
-                    if (keypoint[0] != 0 and keypoint[1] != 0) and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 70 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 70:
+                    if (keypoint[0] != 0 and keypoint[1] != 0) and abs(get_center_of_bbox(hazards[label])[0] - keypoint[0]) < 70 and abs(get_center_of_bbox(hazards[label])[1] - keypoint[1]) < 200:
                         relevant_keypoints_labels.append((keypoint, label))
         return relevant_keypoints_labels
 

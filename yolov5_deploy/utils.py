@@ -142,17 +142,17 @@ def plot_bar_chart(categories, labels, accuracies, confidences, figsize=(5.19, 4
 
 
 if __name__ == "__main__":
-    get_input_streams()
+    # get_input_streams()
 
     ## frame_image_with_header
     # image_path = r'C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\yolov5_deploy\pose_estimation.png'  # Replace with the path to your image
     # header_text = 'YOLOv5 - Pose Estimation'
     # frame_image_with_header(image_path, header_text)
 
-    # # plot_bar_chart
-    # categories = ['Choking Objects', 'Sharp Objects', 'Hot Objects', 'Others']
-    # labels = ['bottle', 'carrot', 'broccoli', 'Vase', 'wine glass', 'knife', 'cup', 'oven', 'human']
-    # accuracies = [85, 82, 94, 86, 92, 70, 84, 86, 98]
-    # confidences = [82, 75, 84, 81, 86, 67, 89, 90, 95]
-    #
-    # plot_bar_chart(categories, labels, accuracies, confidences)
+    # plot_bar_chart
+    categories = ['Choking Objects', 'Sharp Objects', 'Hot Objects', 'Others']
+    labels = ['bottle', 'carrot', 'broccoli', 'Vase', 'wine glass', 'knife', 'cup', 'oven', 'human']
+    accuracies = [85, 82, 94, 86, 92, 70, 84, 86, 98]
+    confidences = [82, 75, 84, 81, 86, 67, 89, 90, 95]
+
+    plot_bar_chart(categories, labels, accuracies, confidences)

@@ -12,9 +12,9 @@ class MainManager:
         self.vid_out = vid_out
         self.element_config = element_config
         self.notification_manager = NotificationManager(chat_id=GROUP_CHAT_ID,
-                                                        rate_limit_seconds=20,
-                                                        consecutive_frames_threshold=2)
-        self.detector = ObjectDetector(self.notification_manager, dangerous_labels=element_config)
+                                                        rate_limit_seconds=3,
+                                                        consecutive_frames_threshold=1)
+        self.detector = ObjectDetector(self.notification_manager)
 
         ## loading the custom trained model
         print(f"[INFO] Loading model... ")
@@ -26,7 +26,7 @@ class MainManager:
             process_img_input(self.classes, self.img_path, self.model)
 
         elif self.vid_path != None:
-            yield from self.process_vid_input(first_run)
+            self.process_vid_input(first_run)
 
     def capture_frame(self):
         pass
@@ -42,6 +42,8 @@ class MainManager:
             out = self.init_video_writer(cap)
         cv2.namedWindow("vid_out", cv2.WINDOW_NORMAL)
 
+        frame_no = 0
+
         while True:
             # start_time = time.time()
             ret, frame = cap.read()
@@ -52,14 +54,17 @@ class MainManager:
                 dangerous_interaction = self.detector.check_interactions_with_dangerous_objects(hazards, consts.frame)
 
                 self.notification_manager.check_and_send_notification_if_needed(dangerous_interaction,
-                                                                                consts.frame)
-                if first_run:
-                    # Convert frame to bytes
-                    ret, buffer = cv2.imencode('.jpg', consts.frame)
-                    if ret:
-                        consts.frame = buffer.tobytes()
-                        Path('tmp.jpg').write_bytes(consts.frame)
-                        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + consts.frame + b'\r\n')
+                                                                                frame
+                                                                                )
+
+                if self.vid_out:
+                    out.write(frame)
+                if cv2.waitKey(5) & 0xFF == 27:
+                    break
+                frame_no += 1
+
+        out.release()
+        cv2.destroyAllWindows()
 
     def init_video_writer(self, cap):
         # by default VideoCapture returns float instead of int
