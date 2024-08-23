@@ -77,7 +77,7 @@ def process_frame_yolo_pose(model, frame):
         return wrist_data
 
 # Placeholder frame for processing
-frame = cv2.imread('WhatsApp Image 2024-06-26 at 17.37.19-crop.jpeg')  # Replace with actual image path
+frame = cv2.imread(r'C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\assets\WhatsApp Image 2024-06-26 at 17.37.19-crop.jpeg')  # Replace with actual image path
 
 model_sizes_yolo = ['yolov5n', 'yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
 model_sizes_midas = ['MiDaS_small', 'DPT_Hybrid', 'DPT_Large']
@@ -116,7 +116,8 @@ for model_size in model_sizes_yolo_pose:
     process_frame_yolo_pose(model, frame)
     end_time = time.time()
     processing_time = end_time - start_time
-    model.predict('WhatsApp Image 2024-06-26 at 17.37.19-crop.jpeg', save=True, imgsz=320, conf=0.5)
+    image_path = r'C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\assets\WhatsApp Image 2024-06-26 at 17.37.19-crop.jpeg'
+    model.predict(image_path, save=True, imgsz=320, conf=0.5)
     results_yolo_pose.append((f'YOLO-Pose-{model_size}', processing_time))
     # results_yolo_pose.append(processing_time)
     print(f'YOLO-Pose-{model_size}: {processing_time:.4f} seconds')
@@ -125,18 +126,18 @@ for model_size in model_sizes_yolo_pose:
 import matplotlib.pyplot as plt
 
 # Plot the results
-# plt.figure(figsize=(10, 5))
-# plt.plot(model_sizes_yolo, results_yolo, marker='o', label='YOLOv5')
-# plt.plot(model_sizes_midas, results_midas, marker='s', label='Midas')
-# plt.plot(model_sizes_yolo_pose, results_yolo_pose, marker='^', label='YOLO-Pose')
-#
-# plt.xlabel('Model Size')
-# plt.ylabel('Processing Time (seconds)')
-# plt.title('Processing Time vs Model Size')
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-# plt.savefig('processing_timessssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss.png')
+plt.figure(figsize=(10, 5))
+plt.plot(model_sizes_yolo, results_yolo, marker='o', label='YOLOv5')
+plt.plot(model_sizes_midas, results_midas, marker='s', label='Midas')
+plt.plot(model_sizes_yolo_pose, results_yolo_pose, marker='^', label='YOLO-Pose')
+
+plt.xlabel('Model Size')
+plt.ylabel('Processing Time (seconds)')
+plt.title('Processing Time vs Model Size')
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.savefig('processing_timessssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss.png')
 print(results_yolo)
 print(results_midas)
 print(results_yolo_pose)

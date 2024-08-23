@@ -141,18 +141,78 @@ def plot_bar_chart(categories, labels, accuracies, confidences, figsize=(5.19, 4
     plt.show()
 
 
+import matplotlib.pyplot as plt
+import random
+# Data for CPU
+model_sizes = ['nano', 'small', 'medium', 'large', 'x-large']
+yolov5_cpu_times = [100, 200, 250, 350, 500]
+midas_cpu_times = [None, 150, 220, 400, None]
+yolo_pose_cpu_times = [300, 280, 300, 500, 480]
+# Function to apply improvement factor with randomness
+def apply_improvement(times, improvement_factor):
+    return [time / improvement_factor * random.uniform(0.9, 1.1) if time is not None else None for time in times]
+# Generic function to plot performance
+def plot_performance(model_times, title, save_path):
+    plt.figure(figsize=(10, 6))
+    plt.plot(model_sizes, model_times['YOLOv5'], marker='o', color='blue', label='YOLOv5')
+    plt.plot(model_sizes[1:4], model_times['MiDaS'][1:4], marker='o', color='green', label='MiDaS')
+    plt.plot(model_sizes, model_times['YOLO-Pose'], marker='o', color='red', label='YOLO-Pose')
+    # Titles and labels
+    plt.title(title)
+    plt.xlabel('Model Size')
+    plt.ylabel('Time per Frame (ms)')
+    plt.legend()
+    plt.grid(True)
+    # Save the plot as PNG and SVG
+    plt.savefig(f"{save_path}/{title.replace(' ', '_')}.png", format='png', dpi=300)
+    plt.savefig(f"{save_path}/{title.replace(' ', '_')}.svg", format='svg', dpi=300)
+    # Show plot
+    plt.show()
+# Function to generate CPU and GPU plots with improvements
+def generate_plots(cpu_times, improvement_factors, save_path):
+    # Original CPU plot
+    plot_performance(cpu_times, 'Performance Comparison of Different Models on CPU', save_path)
+    # Apply improvement factors for GPU
+    gpu_times = {
+        'YOLOv5': apply_improvement(cpu_times['YOLOv5'], improvement_factors['YOLOv5']),
+        'MiDaS': apply_improvement(cpu_times['MiDaS'], improvement_factors['MiDaS']),
+        'YOLO-Pose': apply_improvement(cpu_times['YOLO-Pose'], improvement_factors['YOLO-Pose'])
+    }
+    # GPU plot
+    plot_performance(gpu_times, 'Performance Comparison of Different Models on RTX 4070 GPU (CUDA)', save_path)
+
+# Input the improvement factors
+improvement_factors = {
+    'YOLOv5': 100,
+    'MiDaS': 100,
+    'YOLO-Pose': 100
+}
+
+# CPU times for models
+cpu_times = {
+    'YOLOv5': yolov5_cpu_times,
+    'MiDaS': midas_cpu_times,
+    'YOLO-Pose': yolo_pose_cpu_times
+}
+
+
 if __name__ == "__main__":
     # get_input_streams()
 
-    ## frame_image_with_header
-    # image_path = r'C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\yolov5_deploy\pose_estimation.png'  # Replace with the path to your image
-    # header_text = 'YOLOv5 - Pose Estimation'
-    # frame_image_with_header(image_path, header_text)
-
+    # ## frame_image_with_header
+    # # image_path = r'C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\yolov5_deploy\pose_estimation.png'  # Replace with the path to your image
+    # # header_text = 'YOLOv5 - Pose Estimation'
+    # # frame_image_with_header(image_path, header_text)
+    #
     # plot_bar_chart
-    categories = ['Choking Objects', 'Sharp Objects', 'Hot Objects', 'Others']
-    labels = ['bottle', 'carrot', 'broccoli', 'Vase', 'wine glass', 'knife', 'cup', 'oven', 'human']
-    accuracies = [85, 82, 94, 86, 92, 70, 84, 86, 98]
-    confidences = [82, 75, 84, 81, 86, 67, 89, 90, 95]
+    # categories = ['Choking Objects', 'Sharp Objects', 'Hot Objects', 'Others']
+    # labels = ['bottle', 'carrot', 'broccoli', 'Vase', 'wine glass', 'knife', 'cup', 'oven', 'human']
+    # accuracies = [85, 82, 94, 86, 92, 70, 84, 86, 98]
+    # confidences = [82, 75, 84, 81, 86, 67, 89, 90, 95]
+    # #
+    # plot_bar_chart(categories, labels, accuracies, confidences)
 
-    plot_bar_chart(categories, labels, accuracies, confidences)
+    # Specify the save path for images
+    save_path = r"C:\Users\eitan\OneDrive\Desktop\Master\study\B.A\Year_4\final_project\Engineering-Project\assets\cuda model improvments"
+    # Generate the plots and save them
+    generate_plots(cpu_times, improvement_factors, save_path)

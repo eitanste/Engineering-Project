@@ -18,7 +18,7 @@ class MainManager:
 
         ## loading the custom trained model
         print(f"[INFO] Loading model... ")
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5x6')
+        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5n6')
         self.classes = self.model.names  ### class names in string format
 
     def run(self, first_run):
