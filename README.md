@@ -3,7 +3,7 @@
 NOTICE THAT THIS IS THE LOCAL VERSION OF THE PROJECT. THE ONLINE STREAMING VERSION WHICH REQUIRES AN ACTIVE SERVER CONFIGURATION WILL NOT BE COVERED.
 
 
-OUR WEBSITE: https://toddler-alert.com
+<h3 align="center">OUR WEBSITE: https://toddler-alert.com</h3>
 
 
 ![Project Cover Image](/project-cover-img.jpg)
