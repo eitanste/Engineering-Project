@@ -55,8 +55,8 @@ These instructions will help you set up the project on your local machine for de
 ### 🧱 Prerequisites
 - [Python 3.x](https://www.python.org/downloads/)
 - [Git](https://git-scm.com/)
-- Camera
-- Cuda GPU
+- Camera for input stream - webcam is fine
+- Cuda to use GPU acceleration
 
 ### 🏗️ Installing
 1. Clone the repository:
@@ -76,6 +76,7 @@ These instructions will help you set up the project on your local machine for de
 ### 🏃‍♂️ Running the Code
 
 Modify the input stream as needed by editing the deploy.py file.
+U can run "get_input_streams()" func fro the utils.py file to get a list of your input streams.
 Run the program using:
 
    ```bash
