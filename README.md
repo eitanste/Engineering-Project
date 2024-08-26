@@ -48,7 +48,6 @@ These instructions will help you set up the project on your local machine for de
 
 ### 🧱 Prerequisites
 - [Python 3.x](https://www.python.org/downloads/)
-- [Docker](https://www.docker.com/)
 - [Git](https://git-scm.com/)/
 
 - 
@@ -71,3 +70,26 @@ Modify the input stream as needed by editing the deploy.py file.
 Run the program using:
  ```bash
 python deploy.py
+
+The system will begin processing the video stream and identifying hazardous objects.
+
+📄 Main Files
+
+deploy.py
+This is the main entry point for running the project. It handles the video stream processing, object detection, and triggering notifications. The input stream is hardcoded within this file and can be modified manually.
+
+consts.py
+This file defines constant values used throughout the project, including configuration parameters, threshold values, and other constants.
+
+main_manager.py
+Manages the different components of the project, coordinating tasks like data processing, object detection, and communication between modules.
+
+notification_manager.py
+Responsible for managing notifications sent by the system, including setting up and sending alerts via Telegram when hazardous objects are detected.
+
+object_detector.py
+Implements the core object detection functionality using YOLOv5, processing input data and identifying objects of interest.
+
+object_interaction.py
+Handles interactions between detected objects, such as calculating proximity or determining if an object poses a risk.
+
